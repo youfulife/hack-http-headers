@@ -1,0 +1,29 @@
+{
+    "manifest_version": 2,
+
+    "name": "hack-http-headers",
+    "description": "This extension can edit http headers.",
+    "version": "1.0",
+
+    "options_page": "options.html",
+    "permissions": [
+        "tabs",
+        "cookies",
+        "http://*/*",
+        "https://*/*"
+    ],
+
+    "icons": {
+        "16": "icon.png",
+        "48": "icon.png",
+        "128": "icon.png"
+    },
+
+    "browser_action": {
+        "default_icon": "icon.png",
+        "default_title": "hack-http-headers"
+    },
+    "background": {
+        "scripts": ["background.js"]
+    }
+}

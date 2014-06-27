@@ -1,0 +1,144 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <style>
+
+        * {margin:0; padding:0}
+
+        a.menu:link, a.menu:visited {
+            display: block;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 14px;
+            color: #000000;
+            background-color: #98bf21;
+            text-align: center;
+            padding: 12px;
+            line-height: 14px;
+            margin-right: 1px;
+            border-radius: 5px;
+            width: 5em;
+        }
+        a.menu:hover, a.menu:active {
+            background-color: #7A991A;
+        }
+        ul {
+            display: inline-block;
+            list-style: none;
+            width: 100%;
+            background-color: #000000;
+        }
+        li {
+            float: left;
+        }
+        li b {
+            display: block;
+            background-color: #000000;
+            color: #FFFFFF;
+            padding-top: 12px;
+            padding-left: 5px;
+            padding-right: 2px;
+            margin-right: 2px;
+            line-height: 14px;
+        }
+        li.filter {
+            float: right;
+            width: 400px;
+        }
+        input.text {
+            width: 60%;
+            height: 26px;
+            padding: 0;
+            border: 1px inherit slategray;
+        }
+        input.button {
+            border-radius: 5px;
+            padding: 3px;
+        }
+
+        table {
+            font-family:"Trebuchet MS", Arial, Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid slategray;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+
+    </style>
+    <script src="popup.js"></script>
+</head>
+
+<body>
+
+<div id="menu">
+    <ul>
+        <li><b>Hack HTTP Headers</b></li>
+        <li><a class="menu" href="#">Capture</a></li>
+        <li><a class="menu" href="#">Intercept</a></li>
+        <li><a class="menu" href="#">Forward</a></li>
+        <li><a class="menu" href="#">Drop</a></li>
+        <li><a class="menu" href="#">Clear</a></li>
+        <li><a class="menu" href="#">Setting</a></li>
+        <li class="filter">
+            <b>
+                Filter:<input type="text" class="text">
+                <input type="submit" value="save" class="button">
+            </b>
+        </li>
+    </ul>
+</div>
+
+
+
+
+<div id="table_div">
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25px; text-align: center">#</th>
+                <th style="width: 40px;">Method</th>
+                <th style="width: 40px;">Status</th>
+                <th style="width: 256px;">Url</th>
+                <th style="width: 128px;">Time</th>
+                <th align="left">Headers</th>
+            </tr>
+        </thead>
+        <tr>
+            <td colspan="5">
+                <div>
+                    <table>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <p>
+                        Hack HTTP Headers 用于简单的web渗透测试中。<br />
+                        ta可以查看, 拦截, 修改浏览器发出的http请求。
+                    </p>
+                    <hr />
+                    <p>
+                        欢迎访问<a href="#">个人博客</a>
+                        <br />
+                        如果你喜欢ta, <a href="#">赞助一杯咖啡</a>吧
+                    </p>
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+</body>
+
+<footer>
+</footer>
+</html>
