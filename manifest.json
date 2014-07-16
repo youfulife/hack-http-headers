@@ -9,6 +9,8 @@
     "permissions": [
         "tabs",
         "cookies",
+        "webRequest",
+        "webRequestBlocking",
         "http://*/*",
         "https://*/*"
     ],
