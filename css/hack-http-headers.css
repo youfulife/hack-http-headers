@@ -1,12 +1,13 @@
-﻿button
-{
-    width: 100px;
-}
-
-body
+﻿body
 {
     margin: 0;
     overflow: hidden;
+}
+
+#nav
+{
+    width: 100%;
+    background: #777777;
 }
 
 #responseList td
@@ -48,16 +49,26 @@ h5
 {
     width:300px;
     cursor:pointer;
-    border: 0px;
-    padding: 0px;
-    margin: 0px;
+    border: 0;
+    padding: 0;
+    margin: 0;
 
 }
 .inputUrl
 {
     width: 100%;
     padding: 10px;
-    margin: 0px;
+    margin: 0;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
+
+.requestHeaderValue
+{
+    width: 100%;
+    padding: 10px;
+    margin: 0;
     box-sizing: border-box;
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;

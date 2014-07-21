@@ -3,9 +3,15 @@ var filter = {
     urls: ["<all_urls>"],
     types: [ "main_frame", "sub_frame", "stylesheet", "script", "image", "object", "xmlhttprequest", "other"]
 };
-
 var captured = 1;
+var ascending = 1;
 var request_id = 0;
+var headerInfo = {};
+var settings = {};
+var defaultText = "";
+var selectedRequestId = 0;
+var tempModifyRequest = {};
+var tempFilterUrls = [];
 
 function getClassStyle(statusCode) {
     if(statusCode >= 100 && statusCode < 200)
@@ -57,6 +63,19 @@ function captureType(type) {
     return 0;
 }
 
+function captureUrl(reqUrl) {
+    if(tempFilterUrls.length == 0){
+        return 1;
+    } else {
+        for (var i=0; i < tempFilterUrls.length; i++) {
+            if (reqUrl.indexOf(tempFilterUrls[i]) >= 0) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+}
+
 function getResponseId(reqId){
     var chromeRequestId = headerInfo.request[reqId].requestId;
     var resId = 0;
@@ -85,63 +104,37 @@ function showHeader(reqId) {
     info += '<td class="rUr"><input type="text" class="inputUrl form-control" value="' + headerInfo.request[reqId].url + '" /><\/td>';
     info += '<td class="rTi">' + request_time + "<\/td>";
     info += "<\/tr>";
-    $("#responseList > tbody:first").prepend(info);
-
+    if(ascending == 1){
+        $("#responseList > tbody:last").append(info);
+    }else{
+        $("#responseList > tbody:first").prepend(info);
+    }
 }
 
-function capture() {
-    if(captured == 0)
-    {
-        $('#capture').addClass("active").removeClass("btn-danger").addClass("btn-success");
-        $('#capture').children("span").removeClass("glyphicon-ban-circle").addClass("glyphicon-ok");
-        captured = 1;
-    }
-    else if(captured == 1)
-    {
-        captured = 0;
-        $('#capture').removeClass("active").removeClass("btn-success").addClass("btn-danger");
-        $('#capture').children("span").removeClass("glyphicon-ok").addClass("glyphicon-ban-circle");
-    }
-    else
-    {
-        console.log("error captured value");
+
+function reloadHttpHeadersTable(urlPattern) {
+    $("#responseList > tbody").empty();
+    $("#previewArea").empty().html();
+    for(var i=0; i < headerInfo.request.length; i++) {
+        if(headerInfo.request[i].url.indexOf(urlPattern) >= 0) {
+            showHeader(i);
+        }
     }
 }
 
 function niceRequest(details) {
     var info = "";
     info += '<div class="requestEdit">';
-    info += '<table class="table table-bordered table-condensed table-hover">';
+    info += '<table class="table table-bordered table-condensed table-hover" style="word-break:break-all">';
     info += '<tr><th>Method<\/th><td>' + details.method + '<\/td><\/tr>';
     info += '<tr><th>URL<\/th><td>' + details.url + '<\/td><\/tr>';
     for(var i=0; i < details.requestHeaders.length; i++)
     {
         info += "<tr>";
-        info += '<th>'+ details.requestHeaders[i].name + '<\/th>';
-        info += '<td><textarea wrap="virtual" class="form-control requestHeaderValue">' + details.requestHeaders[i].value + "<\/textarea><\/td><\/tr>";
+        info += '<th nowrap="nowrap">'+ details.requestHeaders[i].name + '<\/th>';
+        info += '<td><div contenteditable="true" class="requestHeaderValue">' + details.requestHeaders[i].value + "<\/div><\/td><\/tr>";
     }
     return info;
-}
-
-var tempModifyRequest = {};
-function edit() {
-    tempModifyRequest.requestHeaders = [];
-    var request = headerInfo.request[selectedRequestId];
-    $('#editModalBody').html(niceRequest(request));
-    $('#editModal').modal("show");
-    $('#editModal').on('shown.bs.modal', function () {
-        $('#save').on("click", function () {
-            headerInfo.modified.push(tempModifyRequest);
-            $('#editModal').modal("hide");
-        });
-    });
-
-    tempModifyRequest.url = request.url;
-    $(".requestHeaderValue").on("change", function(event){
-        var headerName = $(event.target).closest("tr").children().first("th").html();
-        var headerValue = event.target.value;
-        tempModifyRequest.requestHeaders.push({name: headerName, value: headerValue});
-    });
 }
 
 function showDetails(reqId) {
@@ -195,40 +188,6 @@ function showDetails(reqId) {
     resizeWindow();
 }
 
-function clear() {
-    $("#responseList > tbody").empty();
-    $("#previewArea").empty().html(defaultText)
-}
-
-
-function setting() {
-    $("#setMainFrame").prop("checked", settings.cap_MainFrame);
-    $("#setSubFrame").prop("checked", settings.cap_SubFrame);
-    $("#setStylesheet").prop("checked", settings.cap_Stylesheet);
-    $("#setScript").prop("checked", settings.cap_Script);
-    $("#setImage").prop("checked", settings.cap_Image);
-    $("#setObject").prop("checked", settings.cap_Object);
-    $("#setXHR").prop("checked", settings.cap_Xmlhttprequest);
-    $("#setOther").prop("checked", settings.cap_other);
-
-    $('#settingModal').modal("show");
-    $('#settingModal').on('shown.bs.modal', function () {
-        $("#saveSettings").on("click", function(){
-            settings.cap_MainFrame = $("#setMainFrame").prop("checked");
-            settings.cap_SubFrame = $("#setSubFrame").prop("checked");
-            settings.cap_Stylesheet = $("#setStylesheet").prop("checked");
-            settings.cap_Script = $("#setScript").prop("checked");
-            settings.cap_Image = $("#setImage").prop("checked");
-            settings.cap_Object = $("#setObject").prop("checked");
-            settings.cap_Xmlhttprequest = $("#setXHR").prop("checked");
-            settings.cap_other = $("#setOther").prop("checked");
-            localStorage.hackhhSettings = JSON.stringify(settings);
-            $('#settingModal').modal("hide");
-        });
-    });
-}
-
-
 function resizeWindow() {
     $(".results").css("height", "0px");
     $(".preview").css("width", "0px");
@@ -236,11 +195,6 @@ function resizeWindow() {
     $(".results").css("height", $("#mainTable td").css("height"));
     $(".preview").css("width", $("#previewArea").css("width"));
 }
-
-var headerInfo = {};
-var settings = {};
-var defaultText = "";
-var selectedRequestId = 0;
 
 document.addEventListener('DOMContentLoaded', function(){
     headerInfo.request = [];
@@ -250,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function(){
     defaultText = $("#previewArea").html();
 
     chrome.webRequest.onBeforeSendHeaders.addListener(function(details){
-        if(captureType(details.type) != 0 && headerInfo.modified.length != 0)
+        if(captureType(details.type) != 0 && captureUrl(details.url) !=0 && headerInfo.modified.length != 0)
         {
             for(var i=0; i < headerInfo.modified.length; i++)
             {
@@ -263,7 +217,6 @@ document.addEventListener('DOMContentLoaded', function(){
                             details.requestHeaders[k].value = headerInfo.modified[i].requestHeaders[j].value;
                         }
                     }
-                    break;
                 }
             }
         }
@@ -272,34 +225,68 @@ document.addEventListener('DOMContentLoaded', function(){
     }, filter, ["blocking", "requestHeaders"]);
 
     chrome.webRequest.onSendHeaders.addListener(function(details){
-        if(captureType(details.type) != 0 && captured != 0) {
+        if(captureType(details.type) != 0 && captureUrl(details.url) != 0 && captured != 0) {
             headerInfo.request.push(details);
         }
     }, filter, ["requestHeaders"]);
 
     chrome.webRequest.onHeadersReceived.addListener(function(details){
-        if(captureType(details.type) != 0 && captured != 0) {
+        if(captureType(details.type) != 0 && captureUrl(details.url) != 0 && captured != 0) {
             headerInfo.response.push(details);
-            showHeader(request_id);
+            if(headerInfo.request[request_id].url.indexOf($('#tempUrlFilter').val()) >= 0) {
+                showHeader(request_id);
+            }
             request_id += 1;
         }
     }, filter, ["blocking", "responseHeaders"]);
 
-    $('#capture').click(function() {capture()});
-    $('#edit').click(function() {edit()});
-    $('#clear').click(function() {clear()});
-    $('#settings').click(function() {setting()});
-
-    $("#responseList").click(function(e){
-        var elemName = e.toElement.nodeName.toLowerCase();
-        if (elemName == "td" || elemName == "input" || elemName == "span"){
-            var id = $(e.toElement).closest("tr").children().first("td").html();
-            $(e.toElement).closest("tr").children("td").children("input").select();
-            selectedRequestId = id;
-            showDetails(id);
+    $('#capture').on('click', function(){
+        if(captured == 0)
+        {
+            $('#capture').addClass("active").removeClass("btn-danger").addClass("btn-success");
+            $('#capture').children("span").removeClass("glyphicon-ban-circle").addClass("glyphicon-ok");
+            captured = 1;
+        }
+        else
+        {
+            captured = 0;
+            $('#capture').removeClass("active").removeClass("btn-success").addClass("btn-danger");
+            $('#capture').children("span").removeClass("glyphicon-ok").addClass("glyphicon-ban-circle");
         }
     });
-    $("#httpFieldValue").focus();
+    $('#edit').on('click', function(){
+        tempModifyRequest.requestHeaders = [];
+        var request = headerInfo.request[selectedRequestId];
+        if(request != undefined) {
+            tempModifyRequest.url = request.url;
+            $('#editModalBody').html(niceRequest(request));
+            $('#editModal').modal("show");
+        }
+        $(".requestHeaderValue").on("input", function (event) {
+            var headerName = $(event.target).closest("tr").children().first("th").html();
+            var headerValue = event.target.innerHTML;
+            for(var i=0; i < tempModifyRequest.requestHeaders.length; i++)
+            {
+                if(tempModifyRequest.requestHeaders[i].name == headerName)
+                {
+                    tempModifyRequest.requestHeaders.splice(i, 1);
+                }
+            }
+            tempModifyRequest.requestHeaders.push({name: headerName, value: headerValue});
+        });
+
+    });
+    $('#saveEdit').on("click", function () {
+        var temp = {};
+        $.extend(true, temp, tempModifyRequest);
+        headerInfo.modified.push(temp);
+        $('#editModal').modal("hide");
+    });
+    $('#clear').on('click', function() {
+        $("#responseList > tbody").empty();
+        $("#previewArea").empty().html(defaultText);
+    });
+    $('#revert').on('click', function(){ headerInfo.modified = []; });
 
     var capLocalSettings = localStorage.hackhhSettings;
     if(capLocalSettings != undefined)
@@ -319,4 +306,86 @@ document.addEventListener('DOMContentLoaded', function(){
         localStorage.hackhhSettings = JSON.stringify(settings);
     }
 
+    $('#settings').on("click", function(){
+        $("#setMainFrame").prop("checked", settings.cap_MainFrame);
+        $("#setSubFrame").prop("checked", settings.cap_SubFrame);
+        $("#setStylesheet").prop("checked", settings.cap_Stylesheet);
+        $("#setScript").prop("checked", settings.cap_Script);
+        $("#setImage").prop("checked", settings.cap_Image);
+        $("#setObject").prop("checked", settings.cap_Object);
+        $("#setXHR").prop("checked", settings.cap_Xmlhttprequest);
+        $("#setOther").prop("checked", settings.cap_other);
+        $('#settingModal').modal("show");
+    });
+
+    $('.addUrlFilterEternal').on('click', function(){
+        var addFilterUrl = $(event.target).parent().parent().children('input').val();
+        if(addFilterUrl == ''){
+            return;
+        }else {
+            for(var i=0; i < tempFilterUrls.length; i++){
+                if(tempFilterUrls[i] == addFilterUrl){
+                    tempFilterUrls.splice(i, 1);
+                }
+            }
+            tempFilterUrls.push(addFilterUrl);
+        }
+        var oldDev = $(event.target).parent().parent().parent();
+        var newDev = oldDev.clone(true);
+        newDev.find("input").val('');
+        oldDev.after(newDev);
+        $(event.target).addClass('btn-danger').removeClass('addUrlFilterEternal').addClass('delUrlFilterEternal').text('-');
+        $(event.target).off('click').on('click', function(){
+            var delFilterUrl = $(event.target).parent().parent().children('input').val();
+            if(delFilterUrl == ''){
+                return;
+            }else {
+                for(var i=0; i < tempFilterUrls.length; i++){
+                    if(tempFilterUrls[i] == delFilterUrl){
+                        tempFilterUrls.splice(i, 1);
+                    }
+                }
+            }
+            $(event.target).parent().parent().parent().empty();
+        });
+    });
+
+
+    $("#saveSettings").on("click", function () {
+        settings.cap_MainFrame = $("#setMainFrame").prop("checked");
+        settings.cap_SubFrame = $("#setSubFrame").prop("checked");
+        settings.cap_Stylesheet = $("#setStylesheet").prop("checked");
+        settings.cap_Script = $("#setScript").prop("checked");
+        settings.cap_Image = $("#setImage").prop("checked");
+        settings.cap_Object = $("#setObject").prop("checked");
+        settings.cap_Xmlhttprequest = $("#setXHR").prop("checked");
+        settings.cap_other = $("#setOther").prop("checked");
+        localStorage.hackhhSettings = JSON.stringify(settings);
+        $('#settingModal').modal("hide");
+    });
+
+    $("#responseList").click(function(e){
+        var elemName = e.toElement.nodeName.toLowerCase();
+        if (elemName == "td" || elemName == "input" || elemName == "span"){
+            var id = $(e.toElement).closest("tr").children().first("td").html();
+            $(e.toElement).closest("tr").children("td").children("input").select();
+            selectedRequestId = id;
+            showDetails(id);
+        }
+    });
+    $("#httpFieldValue").focus();
+    $('#tempUrlFilter').on('input', function(){
+        reloadHttpHeadersTable($(event.target).val());
+    });
+
+    $('#httpRequestId').on('click', function(){
+        if(ascending == 1){
+            $('#httpRequestId').children("span").removeClass("glyphicon-arrow-up").addClass("glyphicon-arrow-down");
+            ascending = 0;
+        }else {
+            $('#httpRequestId').children("span").removeClass("glyphicon-arrow-down").addClass("glyphicon-arrow-up");
+            ascending = 1;
+        }
+        reloadHttpHeadersTable($('#tempUrlFilter').val());
+    });
 });

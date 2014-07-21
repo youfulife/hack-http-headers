@@ -3,41 +3,25 @@
 <head>
     <meta charset="utf-8">
     <title>Hack HTTP Headers</title>
-    <link rel="stylesheet" href="css/bootstrap.css" type="text/css" />
-    <link rel="stylesheet" href="css/bootstrap-theme.css" type="text/css" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="css/hack-http-headers.css" type="text/css" />
-    <script src="js/jquery.js"></script>
-    <script src="js/bootstrap.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
     <script src="js/hack-http-headers.js"></script>
 </head>
 <body>
 
-<div class="btn-group" id="nav">
-
-    <button class="btn" style="width:160px"><b>Hack HTTP Headers</b></button>
-
-    <button href="#" id="capture" class="btn btn-success active"><span class="glyphicon glyphicon-ok"></span>
-        Capture
-    </button>
+<div class="btn-group container-fluid" id="nav">
+    <button class="btn" style="width:150px; background-color: #777777; padding-left: 0"><b>Hack http headers</b></button>
+    <button id="capture" class="btn btn-success active"><span class="glyphicon glyphicon-ok"></span> Capture</button>
     <button id="edit" class="btn btn-primary"><span class="glyphicon glyphicon-edit"></span> Edit</button>
-    <button id="clear" class="btn btn-danger"><span class="glyphicon glyphicon-remove"></span> Clear</button>
+    <button id="clear" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> Clear</button>
+    <button id="revert" class="btn btn-info"><span class="glyphicon glyphicon-flash"></span> Revert</button>
     <button id="settings" class="btn btn-warning"><span class="glyphicon glyphicon-wrench"></span> Settings</button>
-    <button id="filter" class="btn btn-info"><span class="glyphicon glyphicon-filter"></span> Filter</button>
-</div>
-
-<div class="modal fade" id="editModal" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="editModalLabel">Request</h4>
-            </div>
-            <div class="modal-body" id="editModalBody">
-            </div>
-            <div class="modal-footer">
-                <button type="button" id="save" class="btn btn-success btn-primary">Save</button>
-                <button type="button" id="cancel" class="btn btn-warning" data-dismiss="modal">Cancel</button>
-            </div>
+    <div class="col-lg-4 col-lg-offset-2">
+        <div class="input-group">
+            <span class="input-group-addon"><span class="glyphicon glyphicon-filter"></span>Filter</span>
+            <input type="text" class="form-control" id="tempUrlFilter">
         </div>
     </div>
 </div>
@@ -45,7 +29,7 @@
 <table id="mainTable" class="table table-bordered table-condensed table-hover">
     <thead>
     <tr>
-        <th class="text-justify rId">#</th>
+        <th class="text-justify rId" id="httpRequestId"># <span class="glyphicon glyphicon-arrow-up"></span> </th>
         <th class="text-justify rMe">Method</th>
         <th class="text-justify rSt">Status</th>
         <th class="text-justify rUr">Url</th>
@@ -54,7 +38,7 @@
     </tr>
     </thead>
     <tr>
-        <td colspan="5" style="width: 600px; padding: 0px;">
+        <td colspan="5" style="width: 600px; padding: 0;">
             <div class="results" style="width: 600px; height: 500px; overflow: auto" >
                 <table id="responseList" class="table table-hover table-condensed table-bordered">
                     <tbody>
@@ -62,7 +46,7 @@
                 </table>
             </div>
         </td>
-        <td style="padding: 0px;" id="previewArea">
+        <td style="padding: 0;" id="previewArea">
             <div style="padding:10px;">
                 <p class="lead">
                     <kbd>Capture</kbd> http request headers. <kbd>edit</kbd> then <kbd>Save</kbd><br />
@@ -83,8 +67,24 @@
         </td>
     </tr>
 </table>
+<div class="modal fade" id="editModal" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="editModalLabel">Request</h4>
+            </div>
+            <div class="modal-body" id="editModalBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="saveEdit" class="btn btn-success btn-primary">Save</button>
+                <button type="button" id="cancelEdit" class="btn btn-warning" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="settingModal" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="settingModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="settingModalLabel">Settings</h2>
@@ -92,7 +92,7 @@
             <div class="modal-body">
                 <table class="table table-bordered">
                     <tr>
-                        <td>
+                        <td width="30%">
                             <h3>Capture</h3>
                             <div class="checkbox">
                                 <label><input id="setMainFrame" type="checkbox">Documents</label>
@@ -118,7 +118,18 @@
                             <div class="checkbox">
                                 <label><input id="setOther" type="checkbox">Other</label>
                             </div>
-
+                        </td>
+                        <td>
+                            <h3 align="center">URL Filter</h3>
+                            <div class="col-lg-11">
+                                <div class="input-group">
+                                    <span class="input-group-addon">Host</span>
+                                    <input type="text" class="form-control UrlFilterEternal">
+                                    <span class="input-group-btn">
+                                        <button class="btn addUrlFilterEternal">+</button>
+                                    </span>
+                                </div><!-- /input-group -->
+                            </div><!-- /.col-lg-* -->
                         </td>
                     </tr>
                 </table>
