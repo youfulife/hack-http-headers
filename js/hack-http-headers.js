@@ -12,6 +12,7 @@ var defaultText = "";
 var selectedRequestId = 0;
 var tempModifyRequest = {};
 var tempFilterUrls = [];
+var filterUrlsEternal = [];
 
 function getClassStyle(statusCode) {
     if(statusCode >= 100 && statusCode < 200)
@@ -64,11 +65,11 @@ function captureType(type) {
 }
 
 function captureUrl(reqUrl) {
-    if(tempFilterUrls.length == 0){
+    if(filterUrlsEternal.length == 0){
         return 1;
     } else {
-        for (var i=0; i < tempFilterUrls.length; i++) {
-            if (reqUrl.indexOf(tempFilterUrls[i]) >= 0) {
+        for (var i=0; i < filterUrlsEternal.length; i++) {
+            if (reqUrl.indexOf(filterUrlsEternal[i]) >= 0) {
                 return 1;
             }
         }
@@ -110,7 +111,6 @@ function showHeader(reqId) {
         $("#responseList > tbody:first").prepend(info);
     }
 }
-
 
 function reloadHttpHeadersTable(urlPattern) {
     $("#responseList > tbody").empty();
@@ -305,8 +305,14 @@ document.addEventListener('DOMContentLoaded', function(){
         settings.cap_other = 1;
         localStorage.hackhhSettings = JSON.stringify(settings);
     }
+    var capUrlFilter = localStorage.hackhhUrlFilter;
+    if(capUrlFilter != undefined)
+    {
+        filterUrlsEternal = JSON.parse(capUrlFilter);
+    }
 
     $('#settings').on("click", function(){
+
         $("#setMainFrame").prop("checked", settings.cap_MainFrame);
         $("#setSubFrame").prop("checked", settings.cap_SubFrame);
         $("#setStylesheet").prop("checked", settings.cap_Stylesheet);
@@ -315,6 +321,33 @@ document.addEventListener('DOMContentLoaded', function(){
         $("#setObject").prop("checked", settings.cap_Object);
         $("#setXHR").prop("checked", settings.cap_Xmlhttprequest);
         $("#setOther").prop("checked", settings.cap_other);
+
+        tempFilterUrls = [];
+        $.extend(true, tempFilterUrls, filterUrlsEternal);
+        var inputGroupLength = $('#urlFilterEternal').children().length;
+        var oldDev = $('#urlFilterEternal').children().eq(inputGroupLength-1);
+        for(var i=0; i < inputGroupLength - 1; i++){
+            $('#urlFilterEternal').children().eq(0).remove();
+        }
+        for (i = 0; i < tempFilterUrls.length; i++) {
+            var newDev = oldDev.clone(true);
+            newDev.find("input").val(tempFilterUrls[i]);
+            oldDev.before(newDev);
+            newDev.find("button").addClass('btn-danger').removeClass('addUrlFilterEternal').addClass('delUrlFilterEternal').text('-');
+            newDev.find('button').off('click').on('click', function () {
+                var delFilterUrl = $(this).parent().parent().children('input').val();
+                if (delFilterUrl == '') {
+                    return;
+                } else {
+                    for (var i = 0; i < tempFilterUrls.length; i++) {
+                        if (tempFilterUrls[i] == delFilterUrl) {
+                            tempFilterUrls.splice(i, 1);
+                        }
+                    }
+                }
+                $(this).parent().parent().parent().remove();
+            });
+        }
         $('#settingModal').modal("show");
     });
 
@@ -346,10 +379,9 @@ document.addEventListener('DOMContentLoaded', function(){
                     }
                 }
             }
-            $(event.target).parent().parent().parent().empty();
+            $(event.target).parent().parent().parent().remove();
         });
     });
-
 
     $("#saveSettings").on("click", function () {
         settings.cap_MainFrame = $("#setMainFrame").prop("checked");
@@ -361,6 +393,9 @@ document.addEventListener('DOMContentLoaded', function(){
         settings.cap_Xmlhttprequest = $("#setXHR").prop("checked");
         settings.cap_other = $("#setOther").prop("checked");
         localStorage.hackhhSettings = JSON.stringify(settings);
+        filterUrlsEternal=[];
+        $.extend(true, filterUrlsEternal, tempFilterUrls);
+        localStorage.hackhhUrlFilter = JSON.stringify(filterUrlsEternal);
         $('#settingModal').modal("hide");
     });
 

@@ -1,11 +1,3 @@
-// Copyright (c) 2012 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-chrome.cookies.onChanged.addListener(function(info) {
-    console.log("onChanged" + JSON.stringify(info));
-});
-
 function focusOrCreateTab(url) {
     chrome.windows.getAll({
         "populate": true
@@ -34,7 +26,7 @@ function focusOrCreateTab(url) {
     });
 }
 
-chrome.browserAction.onClicked.addListener(function(tab) {
+chrome.browserAction.onClicked.addListener(function() {
     var manager_url = chrome.extension.getURL("popup.html");
     focusOrCreateTab(manager_url);
 });

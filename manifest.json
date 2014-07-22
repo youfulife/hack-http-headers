@@ -5,7 +5,6 @@
     "description": "This extension can edit http headers.",
     "version": "1.0",
 
-    "options_page": "options.html",
     "permissions": [
         "tabs",
         "cookies",
